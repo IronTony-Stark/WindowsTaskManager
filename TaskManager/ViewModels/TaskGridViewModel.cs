@@ -3,28 +3,36 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Timers;
 using System.Windows;
-using System.Windows.Threading;
+using System.Windows.Controls;
 using TaskManager.Models;
+using TaskManager.Tools;
 
 namespace TaskManager.ViewModels
 {
-    // process updates every 5s
-    // process metadata(isActive, CPU, RAM) updates every 2s
-    // data grid
     // sort data
     // preserve sorting and selection after update
 
     internal class TaskGridViewModel : BaseViewModel
     {
-
         #region Fields
 
-        private Process _selectedProcess;
         private ObservableCollection<ProcessEntity> _processes = new ObservableCollection<ProcessEntity>();
+        private ProcessEntity _selectedProcess;
+        private TabItem _selectedTab;
 
-        private readonly DispatcherTimer _updateProcesses;
-        private readonly DispatcherTimer _updateMetadata;
+        private readonly Timer _updateProcesses;
+        private readonly Timer _updateMetadata;
+        
+        private static ETab _tab = ETab.Info;
+
+        #region Commands
+
+        private RelayCommand<object> _openFolderCommand;
+        private RelayCommand<object> _killProcessCommand;
+
+        #endregion
 
         #endregion
 
@@ -40,7 +48,7 @@ namespace TaskManager.ViewModels
             }
         }
 
-        public Process SelectedProcess
+        public ProcessEntity SelectedProcess
         {
             get => _selectedProcess;
             set
@@ -49,31 +57,54 @@ namespace TaskManager.ViewModels
                 OnPropertyChanged();
             }
         }
+        
+        public TabItem SelectedTab
+        {
+            get => _selectedTab;
+            set
+            {
+                _selectedTab = value;
+                _tab = Utilities.GetTab((string) SelectedTab.Header);
+                OnPropertyChanged();
+            }
+        }
 
-        internal DispatcherTimer UpdateProcesses => _updateProcesses;
-        internal DispatcherTimer UpdateMetadata => _updateMetadata;
+        internal Timer UpdateProcesses => _updateProcesses;
+        internal Timer UpdateMetadata => _updateMetadata;
+
+        #region Commands
+
+        public RelayCommand<object> OpenFolderCommand => _openFolderCommand ?? (_openFolderCommand =
+            new RelayCommand<object>(OpenFolder,
+                o => OpenFolderCanExecute()));
+
+        public RelayCommand<object> KillProcessCommand => _killProcessCommand ?? (_killProcessCommand =
+            new RelayCommand<object>(KillProcess,
+                o => KillProcessCanExecute()));
+
+        #endregion
 
         #endregion
 
         internal TaskGridViewModel()
         {
-            _updateMetadata = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-            _updateMetadata.Tick += UpdateMetadataCallback;
+            // Timer updates data asynchronously
+            _updateMetadata = new Timer(2 * Utilities.Sec);
+            _updateMetadata.Elapsed += UpdateMetadataCallback;
 
-            _updateProcesses = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-            _updateProcesses.Tick += UpdateProcessesCallback;
-            
             UpdateProcessesCallback(new object(), new EventArgs());
-            UpdateMetadataCallback(new object(), new EventArgs());
+
+            _updateProcesses = new Timer(5 * Utilities.Sec);
+            _updateProcesses.Elapsed += UpdateProcessesCallback;
 
             _updateProcesses.Start();
             _updateMetadata.Start();
         }
 
+        #region Update
+
         private void UpdateProcessesCallback(object sender, EventArgs e)
         {
-            UpdateMetadata.IsEnabled = false;
-            
             var currentIds = Processes.Select(p => p.Id).ToList();
 
             foreach (Process p in Process.GetProcesses())
@@ -83,31 +114,50 @@ namespace TaskManager.ViewModels
             // remove processes that do not exist anymore
             foreach (ProcessEntity process in currentIds.Select(id => Processes.First(p => p.Id == id)))
                 Processes.Remove(process);
-            
-            UpdateMetadata.IsEnabled = true;
-        }
-        
-        private void UpdateMetadataCallback(object o, EventArgs eventArgs)
-        {
-            foreach (ProcessEntity process in Processes)
-                process.UpdateMetaData();
         }
 
-        private void OpenFolder()
+        private void UpdateMetadataCallback(object o, EventArgs eventArgs)
+        {
+            for (int i = 0; i < Processes.Count; i++)
+            {
+                ProcessEntity process = Processes[i];
+                process.UpdateMetaData(SelectedProcess, _tab);
+            }
+        }
+
+        #endregion
+
+        #region CommandsImpl
+
+        private void OpenFolder(object obj)
         {
             try
             {
-                Process.Start($@"{SelectedProcess.StartInfo.WorkingDirectory}");
-            } 
+                Process.Start($@"{SelectedProcess.Path}");
+            }
             catch (Win32Exception win32Exception)
             {
                 MessageBox.Show("File Not Found. " + win32Exception.Message);
             }
         }
 
-        private void KillSelectedProcess()
+        private bool OpenFolderCanExecute()
         {
-            SelectedProcess.Kill();
+            return !string.IsNullOrEmpty(SelectedProcess?.Path);
         }
+
+        private void KillProcess(object obj)
+        {
+            Process process = Process.GetProcessById(SelectedProcess.Id);
+            process.Kill();
+            SelectedProcess = null;
+        }
+        
+        private bool KillProcessCanExecute()
+        {
+            return SelectedProcess != null;
+        }
+
+        #endregion
     }
 }

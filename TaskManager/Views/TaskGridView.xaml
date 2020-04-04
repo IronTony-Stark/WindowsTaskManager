@@ -6,18 +6,24 @@
              xmlns:converters="clr-namespace:TaskManager.Tools.Converters"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
-    
+
     <Grid>
         <Grid.Resources>
             <converters:DateTimeToDateConverter x:Key="DateConverter" />
         </Grid.Resources>
-        
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="6*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         
-        <DataGrid Grid.Column="0"
+        <DataGrid Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
                   ItemsSource="{Binding Processes, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                   SelectedItem="{Binding SelectedProcess, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"
                   AutoGenerateColumns="False" IsReadOnly="True"
@@ -27,8 +33,8 @@
                 <!-- <DataGridTextColumn Header="Id" Binding="{Binding Id, Mode=OneWay}" /> -->
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" />
                 <DataGridTextColumn Header="IsActive" Binding="{Binding IsActive, Mode=OneWay}" />
-                <DataGridTextColumn Header="CPU" Binding="{Binding CPU, Mode=OneWay}" />
-                <DataGridTextColumn Header="RAM" Binding="{Binding RAM, Mode=OneWay}" />
+                <DataGridTextColumn Header="CPU (%)" Binding="{Binding CPU, Mode=OneWay}" />
+                <DataGridTextColumn Header="RAM (MB)" Binding="{Binding RAM, Mode=OneWay}" />
                 <!-- <DataGridCheckBoxColumn Header="ThreadsNum" Binding="{Binding ThreadsNum, Mode=OneWay}" /> -->
                 <!-- <DataGridCheckBoxColumn Header="Username" Binding="{Binding Username, Mode=OneWay}" /> -->
                 <!-- <DataGridTextColumn Header="Path" Binding="{Binding Path, Mode=OneWay}" /> -->
@@ -36,31 +42,93 @@
                 <!-- Converter={StaticResource DateConverter}}" /> -->
             </DataGrid.Columns>
         </DataGrid>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.Id, 
-        StringFormat=Id: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.Name, 
-        StringFormat=Name: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.CPU, 
-        StringFormat=CPU: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.RAM, 
-        StringFormat=RAM: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.ThreadsNum, 
-        StringFormat=ThreadsNum: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.Username, 
-        StringFormat=Username: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.Path, 
-        StringFormat=Path: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
-        
-        <TextBlock Grid.Column="1" Text="{Binding SelectedProcess.StartTime, 
-        StringFormat=StartTime: {0}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, 
-        Converter={StaticResource DateConverter}}"/>
-        
+
+        <TabControl Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" 
+                    SelectedItem="{Binding SelectedTab, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
+            <TabItem Header="Info">
+                <StackPanel>
+                    <TextBlock
+                        Text="Selected Process Info" HorizontalAlignment="Center" FontSize="16" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.Id, StringFormat=Id: {0}, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.Name, StringFormat=Name: {0}, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.CPU, StringFormat=CPU: {0}%, 
+                   Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.RAM, StringFormat=RAM: {0} MB, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.ThreadsNum, StringFormat=ThreadsNum: {0}, 
+                   Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.Username, StringFormat=Username: {0}, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock TextWrapping="Wrap"
+                               Text="{Binding SelectedProcess.Path, StringFormat=Path: {0}, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                               HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        Text="{Binding SelectedProcess.StartTime, StringFormat=StartTime: {0}, Mode=OneWay, 
+                   UpdateSourceTrigger=PropertyChanged}"
+                        HorizontalAlignment="Center" />
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Threads">
+                <StackPanel>
+                    <DataGrid
+                        ItemsSource="{Binding SelectedProcess.Threads, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        IsHitTestVisible="False" AutoGenerateColumns="False" IsReadOnly="True"
+                        Height="500">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Id" Binding="{Binding Id, Mode=OneWay}" />
+                            <DataGridTextColumn Header="State" Binding="{Binding State, Mode=OneWay}" />
+                            <DataGridTextColumn Header="StartTime" Binding="{Binding StartTime, Mode=OneWay}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Modules">
+                <StackPanel>
+                    <DataGrid
+                        ItemsSource="{Binding SelectedProcess.Threads, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        IsHitTestVisible="False" AutoGenerateColumns="False" IsReadOnly="True"
+                        Height="500">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" />
+                            <DataGridTextColumn Header="Path" Binding="{Binding Path, Mode=OneWay}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+
+        <Button Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center"
+                VerticalAlignment="Center" Height="30" Width="80"
+                Content="Open Folder" Command="{Binding OpenFolderCommand}" />
+        <Button Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center"
+                VerticalAlignment="Center" Height="30" Width="80" Background="IndianRed" Foreground="White"
+                Content="Kill Process" Command="{Binding KillProcessCommand}" />
+
     </Grid>
 </UserControl>

@@ -1,31 +1,37 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using TaskManager.Tools;
 
 namespace TaskManager.Models
 {
-    public class ProcessEntity : INotifyPropertyChanged, IComparable<ProcessEntity>
+    // TODO better CPU
+    internal class ProcessEntity : INotifyPropertyChanged, IComparable<ProcessEntity>
     {
-
         #region Fields
 
         private readonly Process _process;
-        
+        private readonly PerformanceCounter _cpuCounter;
+        private readonly PerformanceCounter _ramCounter;
+
         // static data
         private readonly int _id;
         private readonly string _name;
         private readonly string _username;
         private readonly string _path;
         private readonly DateTime? _startTime;
-        private readonly ProcessModule _mainModule; 
+        private readonly ProcessModule _mainModule;
 
         // dynamic data
         private bool _isActive;
         private float _cpu;
         private float _ram;
         private int _threadsNum;
+        private List<ThreadEntity> _threads;
+        private List<ModuleEntity> _modules;
 
         #endregion
 
@@ -38,7 +44,7 @@ namespace TaskManager.Models
         public string Path => _path;
         public DateTime? StartTime => _startTime;
         public ProcessModule MainModule => _mainModule;
-        
+
         // dynamic data
         public bool IsActive
         {
@@ -49,6 +55,7 @@ namespace TaskManager.Models
                 OnPropertyChanged();
             }
         }
+
         public float CPU
         {
             get => _cpu;
@@ -56,7 +63,7 @@ namespace TaskManager.Models
             {
                 _cpu = value;
                 OnPropertyChanged();
-            } 
+            }
         }
 
         public float RAM
@@ -79,20 +86,43 @@ namespace TaskManager.Models
             }
         }
 
-        #endregion
+        public List<ThreadEntity> Threads
+        {
+            get => _threads;
+            set
+            {
+                _threads = value;
+                OnPropertyChanged();
+            }
+        }
 
-        // threads {id, state, startTime, ...}
-        public ProcessThreadCollection Threads => _process.Threads;
-        // modules {name, path, ...}
-        public ProcessModuleCollection Modules => _process.Modules;
+        public List<ModuleEntity> Modules
+        {
+            get => _modules;
+            set
+            {
+                _modules = value;
+                OnPropertyChanged();
+            }
+        }
+
+        #endregion
 
         internal ProcessEntity(Process process)
         {
             _process = process;
             _id = _process.Id;
             _name = _process.ProcessName;
-            _username = _process.StartInfo.UserName;
-            _path = _process.StartInfo.WorkingDirectory + _process.StartInfo.FileName;
+            _username = Utilities.GetUsernameBySessionId(process.SessionId, true);
+
+            try
+            {
+                _path = _process.MainModule?.FileName;
+            }
+            catch (Exception)
+            {
+                _path = null;
+            }
 
             try
             {
@@ -102,7 +132,7 @@ namespace TaskManager.Models
             {
                 _startTime = null;
             }
-            
+
             try
             {
                 _mainModule = _process.MainModule;
@@ -111,16 +141,49 @@ namespace TaskManager.Models
             {
                 _mainModule = null;
             }
+
+            _cpuCounter = new PerformanceCounter("Process",
+                "% Processor Time", process.ProcessName);
+            _cpuCounter.NextValue();
+
+            _ramCounter = new PerformanceCounter("Process",
+                "Working Set - Private", process.ProcessName);
         }
 
-        internal void UpdateMetaData()
+        internal void UpdateMetaData(ProcessEntity selectedProcess, ETab tab)
         {
+            _process.Refresh();
+            
             IsActive = _process.Responding;
-            CPU = Utilities.GetCPU(_process);
-            RAM = Utilities.GetRAM(_process);
+            CPU = _cpuCounter.NextValue();
+            RAM = (float) Math.Round((double) _ramCounter.RawValue / 1024 / 1024, 2);
             ThreadsNum = _process.Threads.Count;
+
+            if (this != selectedProcess) return;
+            if (tab == ETab.Threads) UpdateThreads();
+            else UpdateModules();
         }
-        
+
+        private void UpdateThreads()
+        {
+            var threads = (
+                from ProcessThread thread in _process.Threads
+                select new ThreadEntity(thread)
+            ).ToList();
+
+            Threads = threads;
+        }
+
+        private void UpdateModules()
+        {
+            var modules = (
+                from ProcessModule module in _process.Modules
+                select new ModuleEntity(module)
+            ).ToList();
+
+            Modules = modules;
+        }
+
         [field: NonSerialized] public event PropertyChangedEventHandler PropertyChanged;
 
         private protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
