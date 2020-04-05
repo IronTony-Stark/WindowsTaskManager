@@ -6,6 +6,6 @@
         mc:Ignorable="d"
         Title="Task Manager" Height="400" Width="800">
     <Grid>
-        <ContentControl Name="_contentControl" Content="{Binding Content, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsControlEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"></ContentControl>
+        <ContentControl Content="{Binding Content, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"></ContentControl>
     </Grid>
 </Window>

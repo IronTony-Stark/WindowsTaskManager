@@ -5,11 +5,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TaskManager.Tools;
+using TaskManager.Tools.Enums;
 
 namespace TaskManager.Models
 {
     // TODO better CPU
-    internal class ProcessEntity : INotifyPropertyChanged, IComparable<ProcessEntity>
+    internal sealed class ProcessEntity : INotifyPropertyChanged, IComparable<ProcessEntity>
     {
         #region Fields
 
@@ -166,7 +167,7 @@ namespace TaskManager.Models
 
             if (this != selectedProcess) return;
             if (tab == ETab.Threads) UpdateThreads();
-            else if (tab == ETab.Modules) UpdateThreads();
+            else if (tab == ETab.Modules) UpdateModules();
         }
 
         private void UpdateThreads()
@@ -207,7 +208,7 @@ namespace TaskManager.Models
 
         [field: NonSerialized] public event PropertyChangedEventHandler PropertyChanged;
 
-        private protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

@@ -1,4 +1,4 @@
-﻿namespace TaskManager.Tools
+﻿namespace TaskManager.Tools.Enums
 {
     internal enum WtsInfoClass
     {

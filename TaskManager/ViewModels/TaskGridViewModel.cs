@@ -8,24 +8,22 @@ using System.Windows;
 using System.Windows.Controls;
 using TaskManager.Models;
 using TaskManager.Tools;
+using TaskManager.Tools.Enums;
 
 namespace TaskManager.ViewModels
 {
-    // sort data
-    // preserve sorting and selection after update
-
     internal class TaskGridViewModel : BaseViewModel
     {
         #region Fields
 
         private ObservableCollection<ProcessEntity> _processes = new ObservableCollection<ProcessEntity>();
         private ProcessEntity _selectedProcess;
-        
-        private TabItem _selectedTab;
-        private ETab _tab = ETab.Info;
 
         private readonly Timer _updateProcesses;
         private readonly Timer _updateMetadata;
+
+        private ETab _tab = ETab.Info;
+        private ESortBy _sortBy = ESortBy.None;
 
         #region Commands
 
@@ -57,20 +55,27 @@ namespace TaskManager.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public TabItem SelectedTab
         {
-            get => _selectedTab;
             set
             {
-                _selectedTab = value;
-                _tab = Utilities.GetTab((string) SelectedTab.Header);
+                _tab = Utilities.GetTab((string) value.Header);
                 OnPropertyChanged();
             }
         }
 
         internal Timer UpdateProcesses => _updateProcesses;
         internal Timer UpdateMetadata => _updateMetadata;
+
+        public string SortBy
+        {
+            set
+            {
+                _sortBy = Utilities.GetSortBy(value);
+                OnPropertyChanged();
+            }
+        }
 
         #region Commands
 
@@ -114,6 +119,31 @@ namespace TaskManager.ViewModels
             // remove processes that do not exist anymore
             foreach (ProcessEntity process in currentIds.Select(id => Processes.First(p => p.Id == id)))
                 Processes.Remove(process);
+            
+            SortProcesses();
+        }
+        
+        private void SortProcesses()
+        {
+            switch (_sortBy)
+            {
+                case ESortBy.None:
+                    break;
+                case ESortBy.Name:
+                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderBy(i => i.Name));
+                    break;
+                case ESortBy.IsActive:
+                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderBy(i => i.IsActive));
+                    break;
+                case ESortBy.CPU:
+                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderByDescending(i => i.CPU));
+                    break;
+                case ESortBy.RAM:
+                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderByDescending(i => i.RAM));
+                    break;
+                default:
+                    throw new ArgumentException("Sort By Unknown Property");
+            }
         }
 
         private void UpdateMetadataCallback(object o, EventArgs eventArgs)
@@ -160,7 +190,7 @@ namespace TaskManager.ViewModels
                 MessageBox.Show(e.Message);
             }
         }
-        
+
         private bool KillProcessCanExecute()
         {
             return SelectedProcess != null;

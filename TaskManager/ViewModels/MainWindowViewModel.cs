@@ -8,35 +8,24 @@ namespace TaskManager.ViewModels
         #region Fields
         
         private INavigatable _content;
-        private bool _isControlEnabled = true;
-        
+
         #endregion
 
         #region Properties
         
         public INavigatable Content
         {
-            get { return _content; }
+            get => _content;
             set
             {
                 _content = value;
                 OnPropertyChanged();
             }
         }
-        
-        public bool IsControlEnabled
-        {
-            get => _isControlEnabled;
-            set
-            {
-                _isControlEnabled = value;
-                OnPropertyChanged();
-            }
-        }
 
         #endregion
         
-        public MainWindowViewModel()
+        internal MainWindowViewModel()
         {
             NavigationManager.Instance.Initialize(new InitializationNavigationModel(this));
             NavigationManager.Instance.Navigate(ViewType.TaskGrid);

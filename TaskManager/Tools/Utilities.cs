@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using TaskManager.Models;
+using TaskManager.Tools.Enums;
 
 namespace TaskManager.Tools
 {
@@ -11,14 +9,14 @@ namespace TaskManager.Tools
         internal static readonly Random Random = new Random();
 
         internal const int Sec = 1000;
-        
-         [DllImport("Wtsapi32.dll")]
+
+        [DllImport("Wtsapi32.dll")]
         private static extern bool WTSQuerySessionInformation(IntPtr hServer, int sessionId, WtsInfoClass wtsInfoClass,
-            out System.IntPtr ppBuffer, out int pBytesReturned);
+            out IntPtr ppBuffer, out int pBytesReturned);
 
         [DllImport("Wtsapi32.dll")]
         private static extern void WTSFreeMemory(IntPtr pointer);
-        
+
         internal static string GetUsernameBySessionId(int sessionId, bool prependDomain)
         {
             IntPtr buffer;
@@ -59,6 +57,27 @@ namespace TaskManager.Tools
                     return ETab.Threads;
                 case "Modules":
                     return ETab.Modules;
+                case "Sorting":
+                    return ETab.Sorting;
+                default:
+                    throw new ArgumentException("Unknown Tab Name");
+            }
+        }
+
+        internal static ESortBy GetSortBy(string name)
+        {
+            switch (name)
+            {
+                case "None":
+                    return ESortBy.None;
+                case "Name":
+                    return ESortBy.Name;
+                case "IsActive":
+                    return ESortBy.IsActive;
+                case "CPU":
+                    return ESortBy.CPU;
+                case "RAM":
+                    return ESortBy.RAM;
                 default:
                     throw new ArgumentException("Unknown Tab Name");
             }
