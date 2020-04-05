@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -110,49 +111,58 @@ namespace TaskManager.ViewModels
 
         private void UpdateProcessesCallback(object sender, EventArgs e)
         {
-            var currentIds = Processes.Select(p => p.Id).ToList();
+            var newProcesses = Processes.ToList();
+            var currentIds = newProcesses.Select(p => p.Id).ToList();
 
-            foreach (Process p in Process.GetProcesses())
-                if (!currentIds.Remove(p.Id))
-                    Processes.Add(new ProcessEntity(p)); // new process
+            newProcesses.AddRange(
+                from p in Process.GetProcesses()
+                where !currentIds.Remove(p.Id)
+                select new ProcessEntity(p) // new process
+            );
 
             // remove processes that do not exist anymore
             foreach (ProcessEntity process in currentIds.Select(id => Processes.First(p => p.Id == id)))
-                Processes.Remove(process);
-            
-            SortProcesses();
+                newProcesses.Remove(process);
+
+            SortProcesses(newProcesses);
         }
-        
-        private void SortProcesses()
+
+        private void SortProcesses(List<ProcessEntity> newProcesses)
         {
             switch (_sortBy)
             {
                 case ESortBy.None:
                     break;
                 case ESortBy.Name:
-                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderBy(i => i.Name));
+                    newProcesses.Sort((a, b) =>
+                        string.Compare(a.Name, b.Name, StringComparison.Ordinal));
                     break;
                 case ESortBy.IsActive:
-                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderBy(i => i.IsActive));
+                    newProcesses.Sort((a, b) => 
+                        a.IsActive.CompareTo(b.IsActive));
                     break;
                 case ESortBy.CPU:
-                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderByDescending(i => i.CPU));
+                    newProcesses.Sort((a, b) => 
+                        b.CPU.CompareTo(a.CPU));
                     break;
                 case ESortBy.RAM:
-                    Processes = new ObservableCollection<ProcessEntity>(Processes.OrderByDescending(i => i.RAM));
+                    newProcesses.Sort((a, b) => 
+                        b.RAM.CompareTo(a.RAM));
                     break;
                 default:
                     throw new ArgumentException("Sort By Unknown Property");
             }
+
+            Application.Current.Dispatcher?.Invoke(delegate
+            {
+                Processes = new ObservableCollection<ProcessEntity>(newProcesses);
+            });
         }
 
         private void UpdateMetadataCallback(object o, EventArgs eventArgs)
         {
-            for (int i = 0; i < Processes.Count; i++)
-            {
-                ProcessEntity process = Processes[i];
+            foreach (ProcessEntity process in Processes)
                 process.UpdateMetaData(SelectedProcess, _tab);
-            }
         }
 
         #endregion

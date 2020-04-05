@@ -149,8 +149,7 @@ namespace TaskManager.Models
             }
 
             _cpuCounter = new PerformanceCounter("Process",
-                "% Processor Time", process.ProcessName);
-            _cpuCounter.NextValue();
+                "% Processor Time", process.ProcessName, true);
 
             _ramCounter = new PerformanceCounter("Process",
                 "Working Set - Private", process.ProcessName);
@@ -161,7 +160,15 @@ namespace TaskManager.Models
             _process.Refresh();
             
             IsActive = _process.Responding;
-            CPU = _cpuCounter.NextValue();
+            // It's not always possible to track process's CPU
+            try
+            {
+                CPU = _cpuCounter.NextValue();
+            }
+            catch (Exception)
+            {
+                CPU = -1;
+            }
             RAM = (float) Math.Round((double) _ramCounter.RawValue / 1024 / 1024, 2);
             ThreadsNum = _process.Threads.Count;
 

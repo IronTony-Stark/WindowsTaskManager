@@ -140,6 +140,7 @@
                         VerticalContentAlignment="Center"
                         HorizontalContentAlignment="Center">
                         <ComboBoxItem IsSelected="True">None</ComboBoxItem>
+                        <ComboBoxItem>Name</ComboBoxItem>
                         <ComboBoxItem>IsActive</ComboBoxItem>
                         <ComboBoxItem>CPU</ComboBoxItem>
                         <ComboBoxItem>RAM</ComboBoxItem>
