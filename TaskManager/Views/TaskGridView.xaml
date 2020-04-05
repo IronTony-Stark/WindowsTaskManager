@@ -3,15 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:converters="clr-namespace:TaskManager.Tools.Converters"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
 
     <Grid>
-        <Grid.Resources>
-            <converters:DateTimeToDateConverter x:Key="DateConverter" />
-        </Grid.Resources>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="6*" />
             <RowDefinition Height="*" />
@@ -46,56 +41,65 @@
         <TabControl Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" 
                     SelectedItem="{Binding SelectedTab, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}">
             <TabItem Header="Info">
-                <StackPanel>
+                <StackPanel VerticalAlignment="Center">
                     <TextBlock
-                        Text="Selected Process Info" HorizontalAlignment="Center" FontSize="16" />
+                        Text="Selected Process Info" HorizontalAlignment="Center" FontSize="16" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.Id, StringFormat=Id: {0}, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.Name, StringFormat=Name: {0}, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.CPU, StringFormat=CPU: {0}%, 
                    Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.RAM, StringFormat=RAM: {0} MB, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.ThreadsNum, StringFormat=ThreadsNum: {0}, 
                    Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.Username, StringFormat=Username: {0}, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
 
                     <TextBlock TextWrapping="Wrap"
                                Text="{Binding SelectedProcess.Path, StringFormat=Path: {0}, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                               HorizontalAlignment="Center" />
+                               HorizontalAlignment="Center" 
+                               Margin="0 0 0 10"/>
 
                     <TextBlock
                         Text="{Binding SelectedProcess.StartTime, StringFormat=StartTime: {0}, Mode=OneWay, 
                    UpdateSourceTrigger=PropertyChanged}"
-                        HorizontalAlignment="Center" />
+                        HorizontalAlignment="Center" 
+                        Margin="0 0 0 10"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Threads">
                 <StackPanel>
                     <DataGrid
                         ItemsSource="{Binding SelectedProcess.Threads, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                        IsHitTestVisible="False" AutoGenerateColumns="False" IsReadOnly="True"
+                        AutoGenerateColumns="False" IsReadOnly="True"
                         Height="500">
 
                         <DataGrid.Columns>
@@ -109,8 +113,8 @@
             <TabItem Header="Modules">
                 <StackPanel>
                     <DataGrid
-                        ItemsSource="{Binding SelectedProcess.Threads, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                        IsHitTestVisible="False" AutoGenerateColumns="False" IsReadOnly="True"
+                        ItemsSource="{Binding SelectedProcess.Modules, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        AutoGenerateColumns="False" IsReadOnly="True"
                         Height="500">
 
                         <DataGrid.Columns>

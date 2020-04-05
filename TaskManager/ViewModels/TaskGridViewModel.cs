@@ -20,12 +20,12 @@ namespace TaskManager.ViewModels
 
         private ObservableCollection<ProcessEntity> _processes = new ObservableCollection<ProcessEntity>();
         private ProcessEntity _selectedProcess;
+        
         private TabItem _selectedTab;
+        private ETab _tab = ETab.Info;
 
         private readonly Timer _updateProcesses;
         private readonly Timer _updateMetadata;
-        
-        private static ETab _tab = ETab.Info;
 
         #region Commands
 
@@ -148,9 +148,17 @@ namespace TaskManager.ViewModels
 
         private void KillProcess(object obj)
         {
-            Process process = Process.GetProcessById(SelectedProcess.Id);
-            process.Kill();
-            SelectedProcess = null;
+            try
+            {
+                Process process = Process.GetProcessById(SelectedProcess.Id);
+                process.Kill();
+                Processes.Remove(SelectedProcess);
+                SelectedProcess = null;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
         }
         
         private bool KillProcessCanExecute()

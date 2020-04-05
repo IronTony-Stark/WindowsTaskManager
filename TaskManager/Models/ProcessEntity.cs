@@ -114,10 +114,15 @@ namespace TaskManager.Models
             _id = _process.Id;
             _name = _process.ProcessName;
             _username = Utilities.GetUsernameBySessionId(process.SessionId, true);
-
+            
             try
             {
                 _path = _process.MainModule?.FileName;
+                if (_path != null && _path.EndsWith(".exe"))
+                {
+                    int lastSlash = _path.LastIndexOf("\\", StringComparison.Ordinal);
+                    _path = _path.Substring(0, lastSlash);
+                }
             }
             catch (Exception)
             {
@@ -161,27 +166,43 @@ namespace TaskManager.Models
 
             if (this != selectedProcess) return;
             if (tab == ETab.Threads) UpdateThreads();
-            else UpdateModules();
+            else if (tab == ETab.Modules) UpdateThreads();
         }
 
         private void UpdateThreads()
         {
-            var threads = (
-                from ProcessThread thread in _process.Threads
-                select new ThreadEntity(thread)
-            ).ToList();
+            // not all threads are accessible
+            try
+            {
+                var threads = (
+                    from ProcessThread thread in _process.Threads
+                    select new ThreadEntity(thread)
+                ).ToList();
 
-            Threads = threads;
+                Threads = threads;
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
         }
 
         private void UpdateModules()
         {
-            var modules = (
-                from ProcessModule module in _process.Modules
-                select new ModuleEntity(module)
-            ).ToList();
+            // not all modules are accessible due to 32-64 bit system problem
+            try
+            {
+                var modules = (
+                    from ProcessModule module in _process.Modules
+                    select new ModuleEntity(module)
+                ).ToList();
 
-            Modules = modules;
+                Modules = modules;
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
         }
 
         [field: NonSerialized] public event PropertyChangedEventHandler PropertyChanged;
